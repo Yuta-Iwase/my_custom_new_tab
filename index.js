@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modal-title');
     const openModalBtn = document.getElementById('open-modal');
-    const closeModalBtns = document.querySelectorAll('.btn-cancel');
+    const closeModalBtn = document.getElementById('close-modal');
     const saveLinkBtn = document.getElementById('save-link');
     const linkNameInput = document.getElementById('link-name');
     const linkUrlInput = document.getElementById('link-url');
@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentEngineIcon = document.getElementById('current-engine-icon');
     const engineDropdown = document.getElementById('engine-dropdown');
 
+    // Sidebar Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOpenBtn = document.getElementById('sidebar-open');
+    const sidebarCloseBtn = document.getElementById('sidebar-close');
+    const engineNameInput = document.getElementById('engine-name');
+    const engineUrlInput = document.getElementById('engine-url');
+    const addEngineBtn = document.getElementById('add-engine');
+    const engineListAdmin = document.getElementById('engine-list-admin');
+
     const contextMenu = document.getElementById('context-menu');
     const menuEdit = document.getElementById('menu-edit');
     const menuDelete = document.getElementById('menu-delete');
@@ -21,14 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconTypeInputs = document.querySelectorAll('input[name="icon-type"]');
     const customFileInput = document.getElementById('custom-file-input');
     const iconPreview = document.getElementById('icon-preview');
-
-    const modalTabs = document.querySelectorAll('.modal-tab');
-    const formSections = document.querySelectorAll('.form-section');
-
-    const engineNameInput = document.getElementById('engine-name');
-    const engineUrlInput = document.getElementById('engine-url');
-    const addEngineBtn = document.getElementById('add-engine');
-    const engineListAdmin = document.getElementById('engine-list-admin');
 
     // State
     let userLinks = JSON.parse(localStorage.getItem('userLinks')) || [];
@@ -76,6 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
         timeDisplay.textContent = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
     }
 
+    // Sidebar Toggle
+    sidebarOpenBtn.onclick = () => sidebar.classList.add('open');
+    sidebarCloseBtn.onclick = () => sidebar.classList.remove('open');
+
     // Search Engines
     function updateSelectedEngineUI() {
         const engine = searchEngines[selectedEngineIndex];
@@ -107,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `
                 <img src="${engine.icon}">
                 <div class="engine-info">
-                    <strong>${engine.name}</strong><br>
-                    <span style="font-size: 0.7rem; opacity: 0.6;">${engine.url}</span>
+                    <strong>${engine.name}</strong>
+                    <span style="font-size: 0.6rem; opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${engine.url}</span>
                 </div>
                 ${searchEngines.length > 1 ? `<div class="delete-engine" data-index="${index}">×</div>` : ''}
             `;
@@ -134,8 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
         engineDropdown.style.display = engineDropdown.style.display === 'block' ? 'none' : 'block';
     };
 
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
         engineDropdown.style.display = 'none';
+        // Close sidebar if clicking outside
+        if (!sidebar.contains(e.target) && !sidebarOpenBtn.contains(e.target)) {
+            sidebar.classList.remove('open');
+        }
     });
 
     searchInput.addEventListener('keydown', (e) => {
@@ -232,21 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Modal Tabs
-    modalTabs.forEach(tab => {
-        tab.onclick = () => {
-            modalTabs.forEach(t => t.classList.remove('active'));
-            formSections.forEach(s => s.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-        };
-    });
-
     // Modal Logic
     function openEditModal(index) {
         editIndex = index;
         const link = userLinks[index];
-        switchTab('links');
         modalTitle.textContent = 'リンクを編集';
         linkNameInput.value = link.name;
         linkUrlInput.value = link.url;
@@ -257,18 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'flex';
     }
 
-    function switchTab(tabName) {
-        modalTabs.forEach(t => {
-            t.classList.toggle('active', t.dataset.tab === tabName);
-        });
-        formSections.forEach(s => {
-            s.classList.toggle('active', s.id === `tab-${tabName}`);
-        });
-    }
-
     openModalBtn.onclick = () => {
         editIndex = -1;
-        switchTab('links');
         modalTitle.textContent = 'リンクを追加';
         linkNameInput.value = '';
         linkUrlInput.value = '';
@@ -277,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateIconOptionsUI();
         modal.style.display = 'flex';
     };
+
+    closeModalBtn.onclick = () => { modal.style.display = 'none'; };
 
     function updateIconOptionsUI() {
         const typeEl = document.querySelector('input[name="icon-type"]:checked');
