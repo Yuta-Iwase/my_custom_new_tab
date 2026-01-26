@@ -18,10 +18,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const sidebarOpenBtn = document.getElementById('sidebar-open');
     const sidebarCloseBtn = document.getElementById('sidebar-close');
+    const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+    const sidebarSections = document.querySelectorAll('.sidebar-section');
+
+    // Engine UI
     const engineNameInput = document.getElementById('engine-name');
     const engineUrlInput = document.getElementById('engine-url');
     const addEngineBtn = document.getElementById('add-engine');
     const engineListAdmin = document.getElementById('engine-list-admin');
+
+    // Background UI
+    const bgUpload = document.getElementById('bg-upload');
+    const bgReset = document.getElementById('bg-reset');
 
     const contextMenu = document.getElementById('context-menu');
     const menuEdit = document.getElementById('menu-edit');
@@ -47,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialization
     function init() {
+        applyBackground();
         renderLinks();
         renderEngineDropdown();
         renderEngineAdminList();
@@ -66,6 +75,36 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('selectedEngineIndex', selectedEngineIndex);
     }
 
+    // Background Logic
+    function applyBackground() {
+        const savedBg = localStorage.getItem('backgroundImage');
+        if (savedBg) {
+            document.body.style.setProperty('--bg-image', `url(${savedBg})`);
+        } else {
+            document.body.style.removeProperty('--bg-image');
+        }
+    }
+
+    bgUpload.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                localStorage.setItem('backgroundImage', event.target.result);
+                applyBackground();
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    bgReset.onclick = () => {
+        if (confirm('背景をリセットしてデフォルトに戻しますか？')) {
+            localStorage.removeItem('backgroundImage');
+            applyBackground();
+            bgUpload.value = '';
+        }
+    };
+
     // Time
     function updateTime() {
         const now = new Date();
@@ -78,9 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
         timeDisplay.textContent = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
     }
 
-    // Sidebar Toggle
-    sidebarOpenBtn.onclick = () => sidebar.classList.add('open');
+    // Sidebar Logic
+    sidebarOpenBtn.onclick = () => {
+        switchSidebarTab('engines'); // Default tab when opening
+        sidebar.classList.add('open');
+    };
+
     sidebarCloseBtn.onclick = () => sidebar.classList.remove('open');
+
+    function switchSidebarTab(tabName) {
+        sidebarTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        sidebarSections.forEach(section => {
+            section.classList.toggle('active', section.id === `section-${tabName}`);
+        });
+    }
+
+    sidebarTabs.forEach(tab => {
+        tab.onclick = () => switchSidebarTab(tab.dataset.tab);
+    });
 
     // Search Engines
     function updateSelectedEngineUI() {
@@ -116,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong>${engine.name}</strong>
                     <span style="font-size: 0.6rem; opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${engine.url}</span>
                 </div>
-                ${searchEngines.length > 1 ? `<div class="delete-engine" data-index="${index}">×</div>` : ''}
+                ${searchEngines.length > 1 ? `<div class="delete-engine">×</div>` : ''}
             `;
             const delBtn = div.querySelector('.delete-engine');
             if (delBtn) {
@@ -142,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', (e) => {
         engineDropdown.style.display = 'none';
-        // Close sidebar if clicking outside
         if (!sidebar.contains(e.target) && !sidebarOpenBtn.contains(e.target)) {
             sidebar.classList.remove('open');
         }
@@ -249,8 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = 'リンクを編集';
         linkNameInput.value = link.name;
         linkUrlInput.value = link.url;
-        const type = link.iconType || 'initial';
-        document.querySelector(`input[name="icon-type"][value="${type}"]`).checked = true;
+        const typeEl = document.querySelector(`input[name="icon-type"][value="${link.iconType || 'initial'}"]`);
+        if (typeEl) typeEl.checked = true;
         customIconData = link.customIcon || null;
         updateIconOptionsUI();
         modal.style.display = 'flex';
@@ -261,7 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = 'リンクを追加';
         linkNameInput.value = '';
         linkUrlInput.value = '';
-        document.querySelector('input[name="icon-type"][value="initial"]').checked = true;
+        const initialRadio = document.querySelector('input[name="icon-type"][value="initial"]');
+        if (initialRadio) initialRadio.checked = true;
         customIconData = null;
         updateIconOptionsUI();
         modal.style.display = 'flex';
@@ -306,7 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
     saveLinkBtn.onclick = () => {
         const name = linkNameInput.value.trim();
         let url = linkUrlInput.value.trim();
-        const iconType = document.querySelector('input[name="icon-type"]:checked').value;
+        const typeEl = document.querySelector('input[name="icon-type"]:checked');
+        if (!typeEl) return;
+        const iconType = typeEl.value;
         if (name && url) {
             if (!url.startsWith('http')) url = 'https://' + url;
             const linkData = { name, url, iconType, customIcon: (iconType === 'custom') ? customIconData : null };
