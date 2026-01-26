@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Home</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --hover-bg: rgba(255, 255, 255, 0.2);
+            --bg-gradient: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            --modal-bg: rgba(0, 0, 0, 0.8);
+            --icon-size: 70px;
+            --icon-gap: 2rem;
+            --menu-bg: rgba(30, 30, 30, 0.95);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 1100px;
+            padding: 2rem;
+            text-align: center;
+            max-height: 95vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            /* Use monospaced font to prevent jitter */
+            font-variant-numeric: tabular-nums;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: var(--icon-gap);
+            justify-items: center;
+            margin: 0 auto;
+        }
+
+        .icon-card {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .icon-card:hover {
+            transform: scale(1.1);
+        }
+
+        .icon-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.9);
+        }
+
+        .icon-circle {
+            width: var(--icon-size);
+            height: var(--icon-size);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: background 0.3s, width 0.3s, height 0.3s;
+            pointer-events: none;
+        }
+
+        .icon-card:hover .icon-circle {
+            background: var(--hover-bg);
+        }
+
+        .icon-circle img {
+            width: calc(var(--icon-size) * 0.6);
+            height: calc(var(--icon-size) * 0.6);
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .icon-circle span.initial {
+            font-size: calc(var(--icon-size) * 0.4);
+            font-weight: bold;
+        }
+
+        .icon-circle svg {
+            width: calc(var(--icon-size) * 0.5);
+            height: calc(var(--icon-size) * 0.5);
+            fill: white;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            /* Standard property */
+            -webkit-box-orient: vertical;
+            overflow: visible;
+        }
+
+        /* Responsive scaling */
+        @media (max-width: 600px) {
+            :root {
+                --icon-size: 60px;
+                --icon-gap: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+
+            .icon-card {
+                width: 80px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            :root {
+                --icon-size: 50px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            }
+
+            .icon-card {
+                width: 70px;
+            }
+        }
+
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 3rem;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            color: white;
+            outline: none;
+            transition: background 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        #search-input:focus {
+            background: var(--hover-bg);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-align: left;
+        }
+
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Context Menu */
+        #context-menu {
+            display: none;
+            position: fixed;
+            background: var(--menu-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 5px 0;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        #context-menu div {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        #context-menu div:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #context-menu div.delete-item {
+            color: #ff5555;
+        }
+
+        /* Add Button */
+        .add-btn .icon-circle {
+            border: 2px dashed var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            pointer-events: auto;
+        }
+
+        .add-btn:hover .icon-circle {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Modal */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(30, 30, 30, 0.98);
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 95%;
+            max-width: 450px;
+            border: 1px solid var(--glass-border);
+            text-align: left;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: white;
+            outline: none;
+        }
+
+        /* Icon Type selection */
+        .icon-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .icon-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .icon-option input {
+            cursor: pointer;
+        }
+
+        #custom-file-input {
+            margin-top: 10px;
+            display: none;
+            width: 100%;
+            font-size: 0.8rem;
+        }
+
+        .icon-preview {
+            width: 60px;
+            height: 60px;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .icon-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .btn-cancel {
+            background: #444;
+            color: white;
+        }
+
+        .btn-save {
+            background: #4285f4;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="screen">
+        <h1 id="time">12:00</h1>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Google で検索..." autocomplete="off">
+        </div>
+
+        <div class="grid" id="link-grid">
+            <div class="icon-card add-btn" id="open-modal">
+                <div class="icon-circle">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                </div>
+                <span class="label">追加</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">リンクを追加</h2>
+            <div class="form-group">
+                <label>名前</label>
+                <input type="text" id="link-name" placeholder="例: Google">
+            </div>
+            <div class="form-group">
+                <label>URL</label>
+                <input type="text" id="link-url" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label>アイコンの種類</label>
+                <div class="icon-options">
+                    <label class="icon-option">
+                        <input type="radio" name="icon-type" value="initial" checked> 頭文字
+                    </label>
+                    <label class="icon-option">
+                        <input type="radio" name="icon-type" value="favicon"> Favicon (サイトのアイコン)
+                    </label>
+                    <label class="icon-option">
+                        <input type="radio" name="icon-type" value="custom" id="radio-custom"> カスタム画像アップロード
+                    </label>
+                </div>
+                <input type="file" id="custom-file-input" accept="image/*">
+                <div class="icon-preview" id="icon-preview">
+                    <!-- Preview here -->
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="close-modal">キャンセル</button>
+                <button class="btn btn-save" id="save-link">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu">
+        <div id="menu-edit">編集</div>
+        <div id="menu-delete" class="delete-item">削除</div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
