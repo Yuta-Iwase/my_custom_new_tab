@@ -608,6 +608,67 @@
         .btn:hover {
             opacity: 0.8;
         }
+
+        /* Weather Widget */
+        .weather-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .weather-container:hover {
+            transform: translateY(-5px);
+            background: var(--hover-bg);
+        }
+
+        .weather-icon {
+            font-size: 1.8rem;
+        }
+
+        .weather-info {
+            text-align: left;
+        }
+
+        .weather-temp {
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .weather-minmax {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .temp-max {
+            color: #ff8888;
+        }
+
+        .temp-min {
+            color: #88ccff;
+        }
+
+        .weather-desc {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            display: block;
+        }
     </style>
 </head>
 
@@ -641,6 +702,22 @@
         </div>
     </div>
 
+    <!-- Weather Widget -->
+    <div class="weather-container" id="weather-display">
+        <div class="weather-icon" id="weather-icon">--</div>
+        <div class="weather-info">
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span class="weather-temp" id="weather-temp">--°C</span>
+                <span id="weather-location" style="font-size: 0.7rem; opacity: 0.6;">東京</span>
+            </div>
+            <div class="weather-minmax">
+                <span class="temp-min" id="weather-min">--°C</span>
+                <span class="temp-max" id="weather-max">--°C</span>
+            </div>
+            <span class="weather-desc" id="weather-desc">読み込み中...</span>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -654,6 +731,7 @@
         <div class="sidebar-tabs">
             <div class="sidebar-tab active" data-tab="engines">検索エンジン</div>
             <div class="sidebar-tab" data-tab="background">背景設定</div>
+            <div class="sidebar-tab" data-tab="weather">天気設定</div>
         </div>
 
         <!-- Section: Engines -->
@@ -689,6 +767,24 @@
                     style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.05);">デフォルトに戻す</button>
             </div>
             <p style="font-size: 0.75rem; margin-top: 20px; opacity: 0.6;">アップロードした画像はブラウザに保存され、すべての新しいタブで適用されます。</p>
+        </div>
+
+        <!-- Section: Weather -->
+        <div class="sidebar-section" id="section-weather">
+            <h3>天気の表示地域</h3>
+            <div style="margin-top: 20px;">
+                <div class="form-group">
+                    <label>都市名を入力 (英語推奨)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="weather-location-input" placeholder="例: Tokyo, New York"
+                            style="flex-grow: 1; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 10px; color: white; outline: none;">
+                        <button class="btn btn-save" id="weather-location-search"
+                            style="padding: 0.8rem; min-width: 60px;">検索</button>
+                    </div>
+                </div>
+                <div id="weather-search-status" style="font-size: 0.75rem; margin-top: 8px; min-height: 1.2em;"></div>
+            </div>
+            <p style="font-size: 0.75rem; margin-top: 20px; opacity: 0.6;">入力された都市の座標を検索し、天気を表示します。世界中の主要都市に対応しています。</p>
         </div>
     </div>
 

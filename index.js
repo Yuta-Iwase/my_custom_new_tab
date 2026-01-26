@@ -35,6 +35,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuEdit = document.getElementById('menu-edit');
     const menuDelete = document.getElementById('menu-delete');
 
+    // Weather UI
+    const weatherDisplay = document.getElementById('weather-display');
+    const weatherTemp = document.getElementById('weather-temp');
+    const weatherMax = document.getElementById('weather-max');
+    const weatherMin = document.getElementById('weather-min');
+    const weatherDesc = document.getElementById('weather-desc');
+    const weatherIcon = document.getElementById('weather-icon');
+    const weatherLocation = document.getElementById('weather-location');
+    const weatherLocationInput = document.getElementById('weather-location-input');
+    const weatherLocationSearch = document.getElementById('weather-location-search');
+    const weatherSearchStatus = document.getElementById('weather-search-status');
+
+    if (weatherDisplay) {
+        weatherDisplay.onclick = () => {
+            if (selectedCity && selectedCity.name) {
+                const query = encodeURIComponent(selectedCity.name);
+                window.open(`https://www.msn.com/ja-jp/weather/forecast/in-${query}`, '_blank');
+            }
+        };
+    }
+
     const iconTypeInputs = document.querySelectorAll('input[name="icon-type"]');
     const customFileInput = document.getElementById('custom-file-input');
     const iconPreview = document.getElementById('icon-preview');
@@ -50,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedEngineIndex = parseInt(localStorage.getItem('selectedEngineIndex')) || 0;
     if (selectedEngineIndex >= searchEngines.length) selectedEngineIndex = 0;
 
+    let selectedCity = JSON.parse(localStorage.getItem('weatherCity')) || { name: '東京', lat: 35.6895, lon: 139.6917 };
+
     let editIndex = -1;
     let customIconData = null;
 
@@ -60,8 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderEngineDropdown();
         renderEngineAdminList();
         updateSelectedEngineUI();
+        initWeatherSettings();
+        updateWeather(); // Initial fetch
         updateTime();
         setInterval(updateTime, 1000);
+        setInterval(updateWeather, 600000); // 10 mins
         searchInput.focus();
     }
 
@@ -73,6 +99,92 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveEnginesToStorage() {
         localStorage.setItem('searchEngines', JSON.stringify(searchEngines));
         localStorage.setItem('selectedEngineIndex', selectedEngineIndex);
+    }
+
+    // Weather Logic
+    function initWeatherSettings() {
+        if (!weatherLocationSearch) return;
+
+        const performSearch = async () => {
+            const query = weatherLocationInput.value.trim();
+            if (!query) return;
+
+            weatherSearchStatus.textContent = '検索中...';
+            weatherSearchStatus.style.color = 'white';
+
+            try {
+                const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const res = data.results[0];
+                    selectedCity = {
+                        name: res.name,
+                        lat: res.latitude,
+                        lon: res.longitude
+                    };
+                    localStorage.setItem('weatherCity', JSON.stringify(selectedCity));
+                    weatherSearchStatus.textContent = `完了: ${res.name} (${res.country || ''})`;
+                    weatherSearchStatus.style.color = '#34a853';
+                    updateWeather();
+                } else {
+                    weatherSearchStatus.textContent = '都市が見つかりませんでした。';
+                    weatherSearchStatus.style.color = '#ff5555';
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                weatherSearchStatus.textContent = 'エラーが発生しました。';
+                weatherSearchStatus.style.color = '#ff5555';
+            }
+        };
+
+        weatherLocationSearch.onclick = performSearch;
+        weatherLocationInput.onkeydown = (e) => {
+            if (e.key === 'Enter') performSearch();
+        };
+    }
+
+    async function updateWeather() {
+        try {
+            if (weatherLocation) weatherLocation.textContent = selectedCity.name;
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${selectedCity.lat}&longitude=${selectedCity.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
+            const data = await response.json();
+            const current = data.current;
+            const daily = data.daily;
+
+            if (weatherTemp) weatherTemp.textContent = `${Math.round(current.temperature_2m)}°C`;
+            if (weatherMax) weatherMax.textContent = `${Math.round(daily.temperature_2m_max[0])}°`;
+            if (weatherMin) weatherMin.textContent = `${Math.round(daily.temperature_2m_min[0])}°`;
+
+            const weatherInfo = mapWeatherCode(current.weather_code);
+            if (weatherDesc) weatherDesc.textContent = weatherInfo.text;
+            if (weatherIcon) weatherIcon.textContent = weatherInfo.icon;
+        } catch (error) {
+            console.error('Weather fetch error:', error);
+            if (weatherDesc) weatherDesc.textContent = '取得エラー';
+        }
+    }
+
+    function mapWeatherCode(code) {
+        const mapping = {
+            0: { text: '快晴', icon: '☀️' },
+            1: { text: '晴れ', icon: '☀️' },
+            2: { text: '薄曇り', icon: '⛅' },
+            3: { text: '曇り', icon: '☁️' },
+            45: { text: '霧', icon: '🌫️' },
+            48: { text: '霧', icon: '🌫️' },
+            51: { text: '小雨', icon: '🌦️' },
+            53: { text: '小雨', icon: '🌦️' },
+            55: { text: '小雨', icon: '🌦️' },
+            61: { text: '雨', icon: '🌧️' },
+            63: { text: '雨', icon: '🌧️' },
+            65: { text: '激しい雨', icon: '🌧️' },
+            71: { text: '雪', icon: '❄️' },
+            73: { text: '雪', icon: '❄️' },
+            75: { text: '激しい雪', icon: '❄️' },
+            95: { text: '雷雨', icon: '⛈️' }
+        };
+        return mapping[code] || { text: '不明', icon: '❓' };
     }
 
     // Background Logic
