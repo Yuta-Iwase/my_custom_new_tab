@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEngineBtn = document.getElementById('add-engine');
     const engineListAdmin = document.getElementById('engine-list-admin');
 
+    // Settings Import/Export
+    const settingsExportBtn = document.getElementById('settings-export');
+    const settingsImportBtn = document.getElementById('settings-import-btn');
+    const settingsImportFile = document.getElementById('settings-import-file');
+
     // Background UI
     const bgUpload = document.getElementById('bg-upload');
     const bgReset = document.getElementById('bg-reset');
@@ -85,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSelectedEngineUI();
         initWeatherSettings();
         updateWeather(); // Initial fetch
+        initImportExport();
         updateTime();
         setInterval(updateTime, 1000);
         setInterval(updateWeather, 600000); // 10 mins
@@ -142,6 +148,76 @@ document.addEventListener('DOMContentLoaded', () => {
         weatherLocationInput.onkeydown = (e) => {
             if (e.key === 'Enter') performSearch();
         };
+    }
+
+    // Import/Export Logic
+    function initImportExport() {
+        if (settingsExportBtn) {
+            settingsExportBtn.onclick = () => {
+                const settings = {
+                    userLinks: userLinks,
+                    searchEngines: searchEngines,
+                    selectedEngineIndex: selectedEngineIndex,
+                    backgroundImage: localStorage.getItem('backgroundImage'),
+                    weatherCity: JSON.parse(localStorage.getItem('weatherCity'))
+                };
+                const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dashboard-settings-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+        }
+
+        if (settingsImportBtn && settingsImportFile) {
+            settingsImportBtn.onclick = () => settingsImportFile.click();
+            settingsImportFile.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const settings = JSON.parse(event.target.result);
+                        if (confirm('設定を上書きインポートしますか？現在の設定は失われます。')) {
+                            if (settings.userLinks) {
+                                userLinks = settings.userLinks;
+                                saveToStorage();
+                            }
+                            if (settings.searchEngines) {
+                                searchEngines = settings.searchEngines;
+                            }
+                            if (settings.selectedEngineIndex !== undefined) {
+                                selectedEngineIndex = settings.selectedEngineIndex;
+                            }
+                            saveEnginesToStorage();
+
+                            if (settings.backgroundImage) {
+                                localStorage.setItem('backgroundImage', settings.backgroundImage);
+                            } else {
+                                localStorage.removeItem('backgroundImage');
+                            }
+
+                            if (settings.weatherCity) {
+                                selectedCity = settings.weatherCity;
+                                localStorage.setItem('weatherCity', JSON.stringify(selectedCity));
+                            }
+
+                            // Re-initialize app to apply changes
+                            init();
+                            alert('設定をインポートしました。');
+                        }
+                    } catch (err) {
+                        console.error('Import error:', err);
+                        alert('インポートに失敗しました。ファイル形式が正しくありません。');
+                    }
+                    settingsImportFile.value = ''; // Reset input
+                };
+                reader.readAsText(file);
+            };
+        }
     }
 
     async function updateWeather() {
