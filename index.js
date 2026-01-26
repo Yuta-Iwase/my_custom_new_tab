@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let searchEngines = JSON.parse(localStorage.getItem('searchEngines')) || [
         { name: 'Google', url: 'https://www.google.com/search?q=%s', icon: 'https://www.google.com/favicon.ico' },
         { name: 'Bing', url: 'https://www.bing.com/search?q=%s', icon: 'https://www.bing.com/favicon.ico' },
-        { name: 'Yahoo', url: 'https://search.yahoo.co.jp/search?p=%s', icon: 'https://www.yahoo.co.jp/favicon.ico' }
+        { name: 'Yahoo', url: 'https://search.yahoo.co.jp/search?p=%s', icon: 'https://www.yahoo.co.jp/favicon.ico' },
+        { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s', icon: 'https://duckduckgo.com/favicon.ico' }
     ];
     let selectedEngineIndex = parseInt(localStorage.getItem('selectedEngineIndex')) || 0;
     if (selectedEngineIndex >= searchEngines.length) selectedEngineIndex = 0;
