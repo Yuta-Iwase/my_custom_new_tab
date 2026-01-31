@@ -25,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const engineNameInput = document.getElementById('engine-name');
     const engineUrlInput = document.getElementById('engine-url');
     const addEngineBtn = document.getElementById('add-engine');
+    const cancelEditEngineBtn = document.getElementById('cancel-edit-engine');
     const engineListAdmin = document.getElementById('engine-list-admin');
+    const engineIconTypeInputs = document.querySelectorAll('input[name="engine-icon-type"]');
+    const engineCustomFileInput = document.getElementById('engine-custom-file-input');
+    const engineIconPreview = document.getElementById('engine-icon-preview');
 
     // Settings Import/Export
     const settingsExportBtn = document.getElementById('settings-export');
@@ -68,18 +72,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let userLinks = JSON.parse(localStorage.getItem('userLinks')) || [];
     let searchEngines = JSON.parse(localStorage.getItem('searchEngines')) || [
-        { name: 'Google', url: 'https://www.google.com/search?q=%s', icon: 'https://www.google.com/favicon.ico' },
-        { name: 'Bing', url: 'https://www.bing.com/search?q=%s', icon: 'https://www.bing.com/favicon.ico' },
-        { name: 'Yahoo', url: 'https://search.yahoo.co.jp/search?p=%s', icon: 'https://www.yahoo.co.jp/favicon.ico' },
-        { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s', icon: 'https://duckduckgo.com/favicon.ico' }
+        { name: 'Google', url: 'https://www.google.com/search?q=%s', iconType: 'favicon', icon: 'https://www.google.com/favicon.ico' },
+        { name: 'Bing', url: 'https://www.bing.com/search?q=%s', iconType: 'favicon', icon: 'https://www.bing.com/favicon.ico' },
+        { name: 'Yahoo', url: 'https://search.yahoo.co.jp/search?p=%s', iconType: 'favicon', icon: 'https://www.yahoo.co.jp/favicon.ico' },
+        { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s', iconType: 'favicon', icon: 'https://duckduckgo.com/favicon.ico' }
     ];
+    // Migration for old engine format
+    searchEngines = searchEngines.map(e => ({
+        ...e,
+        iconType: e.iconType || 'favicon'
+    }));
+
     let selectedEngineIndex = parseInt(localStorage.getItem('selectedEngineIndex')) || 0;
     if (selectedEngineIndex >= searchEngines.length) selectedEngineIndex = 0;
 
     let selectedCity = JSON.parse(localStorage.getItem('weatherCity')) || { name: '東京', lat: 35.6895, lon: 139.6917 };
 
     let editIndex = -1;
+    let editEngineIndex = -1;
     let customIconData = null;
+    let engineCustomIconData = null;
 
     // Initialization
     function init() {
@@ -95,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(updateTime, 1000);
         setInterval(updateWeather, 600000); // 10 mins
         searchInput.focus();
+        updateEngineIconOptionsUI();
     }
 
     // Storage
@@ -251,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             48: { text: '霧', icon: '🌫️' },
             51: { text: '小雨', icon: '🌦️' },
             53: { text: '小雨', icon: '🌦️' },
+            54: { text: '小雨', icon: '🌦️' },
             55: { text: '小雨', icon: '🌦️' },
             61: { text: '雨', icon: '🌧️' },
             63: { text: '雨', icon: '🌧️' },
@@ -372,16 +386,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Search Engines
     function updateSelectedEngineUI() {
         const engine = searchEngines[selectedEngineIndex];
-        currentEngineIcon.src = engine.icon;
+        const iconHtml = getEngineIconHtml(engine);
+        currentEngineIcon.parentElement.innerHTML = iconHtml;
+        // The currentEngineIcon might have been replaced, so we re-select it
+        const newIcon = engineSelector.querySelector('img, span');
+        if (newIcon && newIcon.tagName === 'IMG') {
+            newIcon.id = 'current-engine-icon';
+        }
         searchInput.placeholder = `${engine.name} で検索...`;
+    }
+
+    function getEngineIconHtml(engine) {
+        if (engine.iconType === 'custom' && engine.customIcon) {
+            return `<img src="${engine.customIcon}" alt="${engine.name}">`;
+        } else if (engine.iconType === 'favicon') {
+            return `<img src="${engine.icon}" alt="${engine.name}">`;
+        } else {
+            return `<div class="engine-icon-circle"><span class="initial">${engine.name.charAt(0).toUpperCase()}</span></div>`;
+        }
     }
 
     function renderEngineDropdown() {
         engineDropdown.innerHTML = '';
+        const totalItems = searchEngines.length + 1; // +1 for the Add button
+        let columns = 3; // Default
+
+        if (totalItems <= 8) {
+            columns = totalItems;
+        } else if (totalItems <= 16) {
+            columns = 8;
+        } else {
+            columns = Math.ceil(totalItems / 2);
+        }
+
+        engineDropdown.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+        // Force a wider min-width based on columns to ensure items don't squash too much
+        engineDropdown.style.width = 'max-content';
+        engineDropdown.style.maxWidth = '90vw';
+
         searchEngines.forEach((engine, index) => {
             const div = document.createElement('div');
             div.className = 'engine-item';
-            div.innerHTML = `<img src="${engine.icon}"><span>${engine.name}</span>`;
+            const iconHtml = getEngineIconHtml(engine);
+            div.innerHTML = `${iconHtml}<span>${engine.name}</span>`;
             div.onclick = () => {
                 selectedEngineIndex = index;
                 saveEnginesToStorage();
@@ -390,6 +437,25 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             engineDropdown.appendChild(div);
         });
+
+        // Add "Add Engine" shortcut
+        const addDiv = document.createElement('div');
+        addDiv.className = 'engine-item add-engine-shortcut';
+        addDiv.innerHTML = `
+            <div class="engine-icon-circle">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                </svg>
+            </div>
+            <span>追加</span>
+        `;
+        addDiv.onclick = (e) => {
+            e.stopPropagation();
+            switchSidebarTab('engines');
+            sidebar.classList.add('open');
+            engineDropdown.style.display = 'none';
+        };
+        engineDropdown.appendChild(addDiv);
     }
 
     function renderEngineAdminList() {
@@ -397,34 +463,122 @@ document.addEventListener('DOMContentLoaded', () => {
         searchEngines.forEach((engine, index) => {
             const div = document.createElement('div');
             div.className = 'engine-list-item';
+            const iconHtml = getEngineIconHtml(engine);
             div.innerHTML = `
-                <img src="${engine.icon}">
+                ${iconHtml}
                 <div class="engine-info">
                     <strong>${engine.name}</strong>
                     <span style="font-size: 0.6rem; opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${engine.url}</span>
                 </div>
-                ${searchEngines.length > 1 ? `<div class="delete-engine">×</div>` : ''}
+                <div class="edit-engine" title="編集">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </div>
+                ${searchEngines.length > 1 ? `<div class="delete-engine" title="削除">×</div>` : ''}
             `;
+
+            if (index === editEngineIndex) {
+                div.classList.add('editing');
+            }
+
+            const editBtn = div.querySelector('.edit-engine');
+            editBtn.onclick = () => {
+                editEngineIndex = index;
+                engineNameInput.value = engine.name;
+                engineUrlInput.value = engine.url;
+                const typeEl = document.querySelector(`input[name="engine-icon-type"][value="${engine.iconType || 'favicon'}"]`);
+                if (typeEl) typeEl.checked = true;
+                engineCustomIconData = engine.customIcon || null;
+                updateEngineIconOptionsUI();
+                addEngineBtn.textContent = '検索エンジンを更新';
+                cancelEditEngineBtn.style.display = 'block';
+                renderEngineAdminList();
+            };
+
             const delBtn = div.querySelector('.delete-engine');
             if (delBtn) {
                 delBtn.onclick = () => {
-                    searchEngines.splice(index, 1);
-                    if (selectedEngineIndex >= index && selectedEngineIndex > 0) {
-                        selectedEngineIndex--;
+                    if (confirm(`「${engine.name}」を削除しますか？`)) {
+                        searchEngines.splice(index, 1);
+                        if (selectedEngineIndex >= index && selectedEngineIndex > 0) {
+                            selectedEngineIndex--;
+                        }
+                        if (editEngineIndex === index) {
+                            resetEngineForm();
+                        } else if (editEngineIndex > index) {
+                            editEngineIndex--;
+                        }
+                        saveEnginesToStorage();
+                        renderEngineAdminList();
+                        renderEngineDropdown();
+                        updateSelectedEngineUI();
                     }
-                    saveEnginesToStorage();
-                    renderEngineAdminList();
-                    renderEngineDropdown();
-                    updateSelectedEngineUI();
                 };
             }
             engineListAdmin.appendChild(div);
         });
     }
 
+    function resetEngineForm() {
+        editEngineIndex = -1;
+        engineNameInput.value = '';
+        engineUrlInput.value = '';
+        const faviconRadio = document.querySelector('input[name="engine-icon-type"][value="favicon"]');
+        if (faviconRadio) faviconRadio.checked = true;
+        engineCustomIconData = null;
+        updateEngineIconOptionsUI();
+        addEngineBtn.textContent = '検索エンジンを追加';
+        cancelEditEngineBtn.style.display = 'none';
+        renderEngineAdminList();
+    }
+
+    cancelEditEngineBtn.onclick = resetEngineForm;
+
+    function updateEngineIconOptionsUI() {
+        const typeEl = document.querySelector('input[name="engine-icon-type"]:checked');
+        if (!typeEl) return;
+        const selectedType = typeEl.value;
+        engineCustomFileInput.style.display = (selectedType === 'custom') ? 'block' : 'none';
+        engineIconPreview.innerHTML = '';
+        if (selectedType === 'custom' && engineCustomIconData) {
+            engineIconPreview.innerHTML = `<img src="${engineCustomIconData}">`;
+        } else if (selectedType === 'favicon' && engineUrlInput.value.trim()) {
+            let url = engineUrlInput.value.trim();
+            const domain = extractDomain(url);
+            const favUrl = domain ? `https://www.google.com/s2/favicons?sz=64&domain=${domain}` : null;
+            if (favUrl) engineIconPreview.innerHTML = `<img src="${favUrl}">`;
+        } else if (selectedType === 'initial' && engineNameInput.value.trim()) {
+            engineIconPreview.innerHTML = `<div class=\"engine-icon-circle\" style=\"width:60px; height:60px; border-radius:10px;\"><span style=\"font-size:2rem; font-weight:bold;\">${engineNameInput.value.trim().charAt(0).toUpperCase()}</span></div>`;
+        }
+    }
+
+    function extractDomain(url) {
+        try {
+            if (!url.startsWith('http')) url = 'https://' + url;
+            return new URL(url).hostname;
+        } catch (e) { return null; }
+    }
+
+    engineIconTypeInputs.forEach(input => input.onchange = updateEngineIconOptionsUI);
+    engineNameInput.oninput = updateEngineIconOptionsUI;
+    engineUrlInput.oninput = updateEngineIconOptionsUI;
+
+    engineCustomFileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                engineCustomIconData = event.target.result;
+                updateEngineIconOptionsUI();
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     engineSelector.onclick = (e) => {
         e.stopPropagation();
-        engineDropdown.style.display = engineDropdown.style.display === 'block' ? 'none' : 'block';
+        engineDropdown.style.display = engineDropdown.style.display === 'grid' ? 'none' : 'grid';
     };
 
     document.addEventListener('click', (e) => {
@@ -450,16 +604,32 @@ document.addEventListener('DOMContentLoaded', () => {
     addEngineBtn.onclick = () => {
         const name = engineNameInput.value.trim();
         const url = engineUrlInput.value.trim();
+        const typeEl = document.querySelector('input[name="engine-icon-type"]:checked');
+        if (!typeEl) return;
+        const iconType = typeEl.value;
+
         if (name && url && url.includes('%s')) {
-            let domain = '';
-            try { domain = new URL(url).hostname; } catch (e) { }
-            const icon = `https://www.google.com/s2/favicons?sz=64&domain=${domain || name}`;
-            searchEngines.push({ name, url, icon });
+            const domain = extractDomain(url);
+            const icon = domain ? `https://www.google.com/s2/favicons?sz=64&domain=${domain}` : '';
+            const engineData = {
+                name,
+                url,
+                iconType,
+                icon,
+                customIcon: (iconType === 'custom') ? engineCustomIconData : null
+            };
+
+            if (editEngineIndex > -1) {
+                searchEngines[editEngineIndex] = engineData;
+                resetEngineForm();
+            } else {
+                searchEngines.push(engineData);
+                resetEngineForm();
+            }
             saveEnginesToStorage();
             renderEngineAdminList();
             renderEngineDropdown();
-            engineNameInput.value = '';
-            engineUrlInput.value = '';
+            updateSelectedEngineUI();
         } else {
             alert('有効な名前と、%sを含むURLを入力してください。');
         }
