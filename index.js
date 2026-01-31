@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedEngineIndex = parseInt(localStorage.getItem('selectedEngineIndex')) || 0;
     if (selectedEngineIndex >= searchEngines.length) selectedEngineIndex = 0;
 
-    let selectedCity = JSON.parse(localStorage.getItem('weatherCity')) || { name: '東京', lat: 35.6895, lon: 139.6917 };
+    let selectedCity = JSON.parse(localStorage.getItem('weatherCity')) || { name: 'Tokyo', lat: 35.6895, lon: 139.6917 };
 
     let editIndex = -1;
     let editEngineIndex = -1;
