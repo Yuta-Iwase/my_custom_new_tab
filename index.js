@@ -264,6 +264,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Background Logic
+    async function updateDynamicColors() {
+        const savedBg = localStorage.getItem('backgroundImage');
+        if (!savedBg) {
+            document.body.classList.remove('light-bg');
+            return;
+        }
+
+        const img = new Image();
+        img.src = savedBg;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 100;
+            ctx.drawImage(img, 0, 0, 100, 100);
+
+            const imageData = ctx.getImageData(0, 0, 100, 100);
+            const data = imageData.data;
+            let r = 0, g = 0, b = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+            }
+
+            const count = data.length / 4;
+            r = r / count;
+            g = g / count;
+            b = b / count;
+
+            // Relative luminance calculation
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+            if (brightness > 180) { // Threshold for light background
+                document.body.classList.add('light-bg');
+            } else {
+                document.body.classList.remove('light-bg');
+            }
+        };
+    }
+
     function applyBackground() {
         const savedBg = localStorage.getItem('backgroundImage');
         if (savedBg) {
@@ -271,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             document.body.style.removeProperty('--bg-image');
         }
+        updateDynamicColors();
     }
 
     bgUpload.onchange = (e) => {
