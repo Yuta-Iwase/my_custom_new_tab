@@ -33,8 +33,8 @@ body.light-bg {
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-gradient);
-    background-image: var(--bg-image, var(--bg-gradient));
+    background: #ffffff;
+    background-image: var(--bg-image);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;

@@ -448,6 +448,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 URL.revokeObjectURL(url);
             }
         };
+
+        // Handle gradient fallback for color updating if no image
+        if (!url) {
+            // Gradient is generally dark-ish, so remove light-bg
+            document.body.classList.remove('light-bg');
+        }
     }
 
     let currentBgObjectURL = null;
@@ -475,7 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.style.setProperty('--bg-image', `url("${url}")`);
                 updateDynamicColors(url);
             } else {
-                document.body.style.removeProperty('--bg-image');
+                // FALLBACK: Use gradient if no image is set
+                document.body.style.setProperty('--bg-image', 'var(--bg-gradient)');
                 updateDynamicColors(null);
             }
         } catch (err) {
