@@ -97,7 +97,33 @@
                     <label>検索URL</label>
                     <input type="text" id="engine-url" placeholder="https://duckduckgo.com/?q=%s">
                 </div>
-                <button class="btn btn-add" id="add-engine">検索エンジンを追加</button>
+                <div class="form-group">
+                    <label>アイコンの種類</label>
+                    <div class="icon-selection-group">
+                        <div class="icon-selection-main">
+                            <div class="icon-options">
+                                <label class="icon-option">
+                                    <input type="radio" name="engine-icon-type" value="favicon" checked> Favicon
+                                </label>
+                                <label class="icon-option">
+                                    <input type="radio" name="engine-icon-type" value="initial"> 頭文字
+                                </label>
+                                <label class="icon-option">
+                                    <input type="radio" name="engine-icon-type" value="custom" id="engine-radio-custom">
+                                    画像選択
+                                </label>
+                            </div>
+                            <input type="file" id="engine-custom-file-input" accept="image/*"
+                                style="display: none; margin-top: 10px; width: 100%; font-size: 0.8rem;">
+                        </div>
+                        <div class="icon-preview" id="engine-icon-preview"></div>
+                    </div>
+                </div>
+                <div class="engine-form-actions">
+                    <button class="btn btn-add" id="add-engine" style="flex-grow: 1;">検索エンジンを追加</button>
+                    <button class="btn btn-cancel" id="cancel-edit-engine"
+                        style="display: none; min-width: 80px;">キャンセル</button>
+                </div>
             </div>
 
             <label style="font-size: 0.9rem; margin-top: 10px; display: block;">登録済みエンジン</label>
@@ -151,19 +177,23 @@
             </div>
             <div class="form-group">
                 <label>アイコンの種類</label>
-                <div class="icon-options">
-                    <label class="icon-option">
-                        <input type="radio" name="icon-type" value="initial" checked> 頭文字
-                    </label>
-                    <label class="icon-option">
-                        <input type="radio" name="icon-type" value="favicon"> Favicon
-                    </label>
-                    <label class="icon-option">
-                        <input type="radio" name="icon-type" value="custom" id="radio-custom"> 画像選択
-                    </label>
+                <div class="icon-selection-group">
+                    <div class="icon-selection-main">
+                        <div class="icon-options">
+                            <label class="icon-option">
+                                <input type="radio" name="icon-type" value="initial" checked> 頭文字
+                            </label>
+                            <label class="icon-option">
+                                <input type="radio" name="icon-type" value="favicon"> Favicon
+                            </label>
+                            <label class="icon-option">
+                                <input type="radio" name="icon-type" value="custom" id="radio-custom"> 画像選択
+                            </label>
+                        </div>
+                        <input type="file" id="custom-file-input" accept="image/*">
+                    </div>
+                    <div class="icon-preview" id="icon-preview"></div>
                 </div>
-                <input type="file" id="custom-file-input" accept="image/*">
-                <div class="icon-preview" id="icon-preview"></div>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" id="close-modal">キャンセル</button>
