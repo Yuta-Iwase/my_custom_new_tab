@@ -10,6 +10,7 @@
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
             --text-color: #ffffff;
+            --text-shadow: rgba(0, 0, 0, 0.5);
             --hover-bg: rgba(255, 255, 255, 0.2);
             --bg-gradient: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             --modal-bg: rgba(0, 0, 0, 0.8);
@@ -17,6 +18,19 @@
             --icon-gap: 2rem;
             --sidebar-bg: rgba(30, 30, 30, 0.98);
             --menu-bg: rgba(30, 30, 30, 0.95);
+            --svg-fill: #ffffff;
+        }
+
+        body.light-bg {
+            --glass-bg: rgba(0, 0, 0, 0.05);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --text-color: #222222;
+            --text-shadow: rgba(255, 255, 255, 0.9);
+            --hover-bg: rgba(0, 0, 0, 0.1);
+            --modal-bg: rgba(255, 255, 255, 0.9);
+            --sidebar-bg: rgba(250, 250, 250, 0.98);
+            --menu-bg: rgba(250, 250, 250, 0.95);
+            --svg-fill: #222222;
         }
 
         * {
@@ -60,7 +74,7 @@
             margin-bottom: 2.5rem;
             font-weight: 300;
             letter-spacing: 2px;
-            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 4px 10px var(--text-shadow);
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-variant-numeric: tabular-nums;
         }
@@ -92,7 +106,7 @@
         .sidebar-toggle svg {
             width: 24px;
             height: 24px;
-            fill: white;
+            fill: var(--svg-fill);
         }
 
         /* Sidebar */
@@ -211,7 +225,7 @@
         }
 
         .engine-selector:hover {
-            background: var(--hover-bg);
+            background: rgba(0, 0, 0, 0.05);
         }
 
         .engine-selector img {
@@ -225,25 +239,25 @@
             width: 100%;
             padding: 1rem 1.5rem 1rem 3.5rem;
             font-size: 1.1rem;
-            background: var(--glass-bg);
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
             border-radius: 30px;
-            color: white;
+            color: #222;
             outline: none;
             transition: background 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             text-align: left;
         }
 
         #search-input:focus {
-            background: var(--hover-bg);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         #search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(0, 0, 0, 0.4);
         }
 
         .engine-dropdown {
@@ -344,13 +358,13 @@
         .icon-circle svg {
             width: calc(var(--icon-size) * 0.5);
             height: calc(var(--icon-size) * 0.5);
-            fill: white;
+            fill: var(--svg-fill);
         }
 
         .label {
             font-size: 0.8rem;
             font-weight: 500;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px var(--text-shadow);
             text-align: center;
             width: 100%;
             word-wrap: break-word;
@@ -478,10 +492,10 @@
         .form-group input[type="text"] {
             width: 100%;
             padding: 0.8rem;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 10px;
-            color: white;
+            color: var(--text-color);
             outline: none;
         }
 
@@ -640,6 +654,7 @@
 
         .weather-info {
             text-align: left;
+            text-shadow: 0 1px 4px var(--text-shadow);
         }
 
         .weather-temp {
