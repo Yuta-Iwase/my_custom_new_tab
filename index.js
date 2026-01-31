@@ -429,7 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', (e) => {
         engineDropdown.style.display = 'none';
-        if (!sidebar.contains(e.target) && !sidebarOpenBtn.contains(e.target)) {
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
             sidebar.classList.remove('open');
         }
     });
