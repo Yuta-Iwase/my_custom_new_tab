@@ -94,8 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let engineCustomIconData = null;
 
     // Initialization
-    function init() {
-        applyBackground();
+    async function init() {
+        await migrateBackgroundFromLocalStorage();
+        await applyBackground();
         renderLinks();
         renderEngineDropdown();
         renderEngineAdminList();
@@ -108,6 +109,83 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(updateWeather, 600000); // 10 mins
         searchInput.focus();
         updateEngineIconOptionsUI();
+    }
+
+    // IndexedDB for Background Image storage (to avoid localStorage quota issues)
+    const DB_NAME = 'DashboardDB';
+    const STORE_NAME = 'settings';
+    const BG_IMAGE_KEY = 'backgroundImage';
+    let dbInstance = null;
+
+    async function getDB() {
+        if (dbInstance) return dbInstance;
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+            request.onsuccess = (e) => {
+                dbInstance = e.target.result;
+                resolve(dbInstance);
+            };
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function setDBValue(key, value) {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put(value, key);
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = (e) => reject(e.target.error || transaction.error);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function getDBValue(key) {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function deleteDBValue(key) {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.delete(key);
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = (e) => reject(e.target.error || transaction.error);
+        });
+    }
+
+    async function migrateBackgroundFromLocalStorage() {
+        let oldBg = localStorage.getItem('backgroundImage');
+        if (oldBg) {
+            console.log('Found background image in localStorage, migrating...');
+            try {
+                if (typeof oldBg === 'string' && oldBg.startsWith('data:')) {
+                    const blob = await dataURLToBlob(oldBg);
+                    if (blob) oldBg = blob;
+                }
+                await setDBValue(BG_IMAGE_KEY, oldBg);
+                localStorage.removeItem('backgroundImage');
+                console.log('Background image migrated to IndexedDB successfully');
+            } catch (err) {
+                console.error('Migration failed:', err);
+            }
+        }
     }
 
     // Storage
@@ -163,15 +241,45 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Helpers to convert between Blob and Base64
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function dataURLToBlob(dataURL) {
+        try {
+            const res = await fetch(dataURL);
+            return await res.blob();
+        } catch (e) {
+            console.error('Failed to convert dataURL to blob', e);
+            return null;
+        }
+    }
+
     // Import/Export Logic
     function initImportExport() {
         if (settingsExportBtn) {
-            settingsExportBtn.onclick = () => {
+            settingsExportBtn.onclick = async () => {
+                let bgImage = await getDBValue(BG_IMAGE_KEY);
+                if (bgImage instanceof Blob) {
+                    try {
+                        bgImage = await blobToBase64(bgImage);
+                    } catch (e) {
+                        console.error('Failed to convert blob to base64 for export', e);
+                        bgImage = null;
+                    }
+                }
+
                 const settings = {
                     userLinks: userLinks,
                     searchEngines: searchEngines,
                     selectedEngineIndex: selectedEngineIndex,
-                    backgroundImage: localStorage.getItem('backgroundImage'),
+                    backgroundImage: bgImage,
                     weatherCity: JSON.parse(localStorage.getItem('weatherCity'))
                 };
                 const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
@@ -191,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!file) return;
 
                 const reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = async (event) => {
                     try {
                         const settings = JSON.parse(event.target.result);
                         if (confirm('設定を上書きインポートしますか？現在の設定は失われます。')) {
@@ -208,9 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             saveEnginesToStorage();
 
                             if (settings.backgroundImage) {
-                                localStorage.setItem('backgroundImage', settings.backgroundImage);
+                                let bgData = settings.backgroundImage;
+                                if (typeof bgData === 'string' && bgData.startsWith('data:')) {
+                                    const blob = await dataURLToBlob(bgData);
+                                    if (blob) bgData = blob;
+                                }
+                                await setDBValue(BG_IMAGE_KEY, bgData);
+                                localStorage.removeItem('backgroundImage'); // Ensure old storage is cleared
                             } else {
-                                localStorage.removeItem('backgroundImage');
+                                await deleteDBValue(BG_IMAGE_KEY);
                             }
 
                             if (settings.weatherCity) {
@@ -277,16 +391,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return mapping[code] || { text: '不明', icon: '❓' };
     }
 
-    // Background Logic
-    async function updateDynamicColors() {
-        const savedBg = localStorage.getItem('backgroundImage');
-        if (!savedBg) {
-            document.body.classList.remove('light-bg');
-            return;
+    async function updateDynamicColors(input) {
+        let url = input;
+
+        // If no input, try to get from DB
+        if (!url) {
+            const data = await getDBValue(BG_IMAGE_KEY);
+            if (!data) {
+                document.body.classList.remove('light-bg');
+                return;
+            }
+            if (data instanceof Blob) {
+                url = URL.createObjectURL(data);
+                // Note: This temporary URL is not managed by applyBackground, 
+                // but that's okay for a single load.
+            } else {
+                url = data;
+            }
         }
 
         const img = new Image();
-        img.src = savedBg;
+        img.src = url;
         img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -317,34 +442,66 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 document.body.classList.remove('light-bg');
             }
+
+            // Clean up if we created a temporary URL
+            if (input !== url && url.startsWith('blob:')) {
+                URL.revokeObjectURL(url);
+            }
         };
     }
 
-    function applyBackground() {
-        const savedBg = localStorage.getItem('backgroundImage');
-        if (savedBg) {
-            document.body.style.setProperty('--bg-image', `url(${savedBg})`);
-        } else {
-            document.body.style.removeProperty('--bg-image');
+    let currentBgObjectURL = null;
+
+    async function applyBackground() {
+        try {
+            const data = await getDBValue(BG_IMAGE_KEY);
+
+            // Clean up old object URL if any
+            if (currentBgObjectURL) {
+                URL.revokeObjectURL(currentBgObjectURL);
+                currentBgObjectURL = null;
+            }
+
+            if (data) {
+                let url;
+                if (data instanceof Blob) {
+                    currentBgObjectURL = URL.createObjectURL(data);
+                    url = currentBgObjectURL;
+                } else {
+                    // Legacy base64 string
+                    url = data;
+                }
+
+                document.body.style.setProperty('--bg-image', `url("${url}")`);
+                updateDynamicColors(url);
+            } else {
+                document.body.style.removeProperty('--bg-image');
+                updateDynamicColors(null);
+            }
+        } catch (err) {
+            console.error('Error applying background:', err);
         }
-        updateDynamicColors();
     }
 
-    bgUpload.onchange = (e) => {
+    bgUpload.onchange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                localStorage.setItem('backgroundImage', event.target.result);
-                applyBackground();
-            };
-            reader.readAsDataURL(file);
+            console.log(`Uploading background: ${file.name} (${file.size} bytes)`);
+            try {
+                // Save the File (Blob) directly to IndexedDB - MUCH more efficient for large images
+                await setDBValue(BG_IMAGE_KEY, file);
+                console.log('Background image saved as Blob in IndexedDB');
+                await applyBackground();
+            } catch (err) {
+                console.error('Failed to save image to IndexedDB:', err);
+                alert('画像の保存に失敗しました。：' + (err.message || '不明なエラー'));
+            }
         }
     };
 
-    bgReset.onclick = () => {
+    bgReset.onclick = async () => {
         if (confirm('背景をリセットしてデフォルトに戻しますか？')) {
-            localStorage.removeItem('backgroundImage');
+            await deleteDBValue(BG_IMAGE_KEY);
             applyBackground();
             bgUpload.value = '';
         }
