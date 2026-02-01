@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sidebar Logic
     sidebarOpenBtn.onclick = () => {
-        switchSidebarTab('engines'); // Default tab when opening
+        switchSidebarTab('general'); // Default tab when opening
         sidebar.classList.add('open');
     };
 
