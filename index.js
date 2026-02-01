@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconTypeInputs = document.querySelectorAll('input[name="icon-type"]');
     const customFileInput = document.getElementById('custom-file-input');
     const iconPreview = document.getElementById('icon-preview');
+    const maximizeIconCheckbox = document.getElementById('maximize-icon');
 
     // State
     let userLinks = JSON.parse(localStorage.getItem('userLinks')) || [];
@@ -528,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sidebar Logic
     sidebarOpenBtn.onclick = () => {
-        switchSidebarTab('engines'); // Default tab when opening
+        switchSidebarTab('general'); // Default tab when opening
         sidebar.classList.add('open');
     };
 
@@ -828,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconContent = `<span class="initial">${link.name.charAt(0).toUpperCase()}</span>`;
             }
 
-            a.innerHTML = `<div class="icon-circle">${iconContent}</div><span class="label">${link.name}</span>`;
+            a.innerHTML = `<div class="icon-circle ${link.maximizeIcon ? 'maximize' : ''}">${iconContent}</div><span class="label">${link.name}</span>`;
 
             a.addEventListener('dragstart', handleDragStart);
             a.addEventListener('dragover', handleDragOver);
@@ -875,6 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeEl = document.querySelector(`input[name="icon-type"][value="${link.iconType || 'initial'}"]`);
         if (typeEl) typeEl.checked = true;
         customIconData = link.customIcon || null;
+        maximizeIconCheckbox.checked = !!link.maximizeIcon;
         updateIconOptionsUI();
         modal.style.display = 'flex';
     }
@@ -887,6 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const initialRadio = document.querySelector('input[name="icon-type"][value="initial"]');
         if (initialRadio) initialRadio.checked = true;
         customIconData = null;
+        maximizeIconCheckbox.checked = false;
         updateIconOptionsUI();
         modal.style.display = 'flex';
     };
@@ -909,9 +912,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (selectedType === 'initial' && linkNameInput.value.trim()) {
             iconPreview.innerHTML = `<span style="font-size:2rem;">${linkNameInput.value.trim().charAt(0).toUpperCase()}</span>`;
         }
+
+        if (maximizeIconCheckbox.checked) {
+            iconPreview.classList.add('maximize');
+        } else {
+            iconPreview.classList.remove('maximize');
+        }
     }
 
     iconTypeInputs.forEach(input => input.onchange = updateIconOptionsUI);
+    maximizeIconCheckbox.onchange = updateIconOptionsUI;
     linkNameInput.oninput = updateIconOptionsUI;
     linkUrlInput.oninput = updateIconOptionsUI;
 
@@ -935,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const iconType = typeEl.value;
         if (name && url) {
             if (!url.startsWith('http')) url = 'https://' + url;
-            const linkData = { name, url, iconType, customIcon: (iconType === 'custom') ? customIconData : null };
+            const linkData = { name, url, iconType, customIcon: (iconType === 'custom') ? customIconData : null, maximizeIcon: maximizeIconCheckbox.checked };
             if (editIndex > -1) userLinks[editIndex] = linkData;
             else userLinks.push(linkData);
             saveToStorage();

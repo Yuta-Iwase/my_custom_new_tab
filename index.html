@@ -78,13 +78,33 @@
         </div>
 
         <div class="sidebar-tabs">
-            <div class="sidebar-tab active" data-tab="engines">検索エンジン</div>
-            <div class="sidebar-tab" data-tab="background">背景設定</div>
+            <div class="sidebar-tab active" data-tab="general">一般</div>
+            <div class="sidebar-tab" data-tab="engines">検索エンジン</div>
             <div class="sidebar-tab" data-tab="weather">天気設定</div>
         </div>
 
+        <!-- Section: General -->
+        <div class="sidebar-section active" id="section-general">
+            <div class="settings-group">
+                <h3>背景設定</h3>
+                <div class="form-group">
+                    <label>画像をアップロード</label>
+                    <input type="file" id="bg-upload" accept="image/*" style="font-size: 0.8rem; width: 100%;">
+                </div>
+                <button class="btn btn-cancel" id="bg-reset"
+                    style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.05);">デフォルトに戻す</button>
+                <p style="font-size: 0.75rem; margin-top: 10px; opacity: 0.6;">アップロードした画像はブラウザに保存され、すべての新しいタブで適用されます。
+                </p>
+            </div>
+
+            <div class="settings-group" style="margin-top: 30px;">
+                <h3>Dummy Setting</h3>
+                <p style="font-size: 0.85rem; opacity: 0.8;">This is dummy setting.</p>
+            </div>
+        </div>
+
         <!-- Section: Engines -->
-        <div class="sidebar-section active" id="section-engines">
+        <div class="sidebar-section" id="section-engines">
             <h3>エンジンの管理</h3>
             <p style="font-size: 0.75rem; margin: 10px 0; opacity: 0.6;">検索語句を <code>%s</code> として含めてください。</p>
 
@@ -128,20 +148,6 @@
 
             <label style="font-size: 0.9rem; margin-top: 10px; display: block;">登録済みエンジン</label>
             <div class="engine-list" id="engine-list-admin"></div>
-        </div>
-
-        <!-- Section: Background -->
-        <div class="sidebar-section" id="section-background">
-            <h3>背景画像のカスタマイズ</h3>
-            <div style="margin-top: 15px;">
-                <div class="form-group">
-                    <label>画像をアップロード</label>
-                    <input type="file" id="bg-upload" accept="image/*" style="font-size: 0.8rem; width: 100%;">
-                </div>
-                <button class="btn btn-cancel" id="bg-reset"
-                    style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.05);">デフォルトに戻す</button>
-            </div>
-            <p style="font-size: 0.75rem; margin-top: 20px; opacity: 0.6;">アップロードした画像はブラウザに保存され、すべての新しいタブで適用されます。</p>
         </div>
 
         <!-- Section: Weather -->
@@ -188,6 +194,11 @@
                             </label>
                             <label class="icon-option">
                                 <input type="radio" name="icon-type" value="custom" id="radio-custom"> 画像選択
+                            </label>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <label class="icon-option">
+                                <input type="checkbox" id="maximize-icon"> 画像を最大化する
                             </label>
                         </div>
                         <input type="file" id="custom-file-input" accept="image/*">
