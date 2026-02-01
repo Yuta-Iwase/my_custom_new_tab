@@ -373,6 +373,15 @@ h1 {
     height: calc(var(--icon-size) * 0.6);
     object-fit: contain;
     border-radius: 8px;
+    transition: width 0.3s, height 0.3s, border-radius 0.3s;
+}
+
+.icon-circle.maximize img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+    /* Match .icon-circle border-radius */
 }
 
 .icon-circle span.initial {
@@ -572,6 +581,11 @@ h1 {
 .icon-preview img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
+    transition: object-fit 0.3s;
+}
+
+.icon-preview.maximize img {
     object-fit: cover;
 }
 
