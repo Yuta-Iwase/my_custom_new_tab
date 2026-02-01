@@ -350,22 +350,20 @@ h1 {
 .icon-circle {
     width: var(--icon-size);
     height: var(--icon-size);
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    background: #ffffff;
     border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 0.8rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
     transition: background 0.3s, width 0.3s, height 0.3s;
     pointer-events: none;
+    color: #222222;
 }
 
 .icon-card:hover .icon-circle {
-    background: var(--hover-bg);
+    background: #f0f0f0;
 }
 
 .icon-circle img {
@@ -392,7 +390,7 @@ h1 {
 .icon-circle svg {
     width: calc(var(--icon-size) * 0.5);
     height: calc(var(--icon-size) * 0.5);
-    fill: var(--svg-fill);
+    fill: #222222;
 }
 
 .label {
@@ -471,13 +469,12 @@ h1 {
 
 /* Add Button */
 .add-btn .icon-circle {
-    border: 2px dashed var(--glass-border);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.7);
     pointer-events: auto;
 }
 
 .add-btn:hover .icon-circle {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.85);
 }
 
 /* Modal */
