@@ -552,12 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSelectedEngineUI() {
         const engine = searchEngines[selectedEngineIndex];
         const iconHtml = getEngineIconHtml(engine);
-        currentEngineIcon.parentElement.innerHTML = iconHtml;
-        // The currentEngineIcon might have been replaced, so we re-select it
-        const newIcon = engineSelector.querySelector('img, span');
-        if (newIcon && newIcon.tagName === 'IMG') {
-            newIcon.id = 'current-engine-icon';
-        }
+        engineSelector.innerHTML = iconHtml;
         searchInput.placeholder = `${engine.name} で検索...`;
     }
 
