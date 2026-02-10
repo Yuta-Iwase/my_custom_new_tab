@@ -601,6 +601,31 @@ h1 {
     border-bottom: 1px solid var(--glass-border);
     background: rgba(255, 255, 255, 0.02);
     gap: 10px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 5px;
+    margin-right: -5px;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.engine-list-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
 }
 
 .engine-list-item:last-child {
