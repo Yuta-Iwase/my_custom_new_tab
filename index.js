@@ -237,9 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         weatherLocationSearch.onclick = performSearch;
-        weatherLocationInput.onkeydown = (e) => {
-            if (e.key === 'Enter') performSearch();
-        };
+        weatherLocationInput.addEventListener('beforeinput', (e) => {
+            if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
     }
 
     // Helpers to convert between Blob and Base64
@@ -776,8 +779,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+    searchInput.addEventListener('beforeinput', (e) => {
+        if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') {
+            e.preventDefault();
             const query = searchInput.value.trim();
             if (query) {
                 const engine = searchEngines[selectedEngineIndex];
