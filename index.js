@@ -623,8 +623,20 @@ document.addEventListener('DOMContentLoaded', () => {
         searchEngines.forEach((engine, index) => {
             const div = document.createElement('div');
             div.className = 'engine-list-item';
+            div.dataset.engineIndex = index;
+
             const iconHtml = getEngineIconHtml(engine);
             div.innerHTML = `
+                <div class="drag-handle" draggable="true" title="ドラッグして並び替え">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="5" r="1" fill="currentColor"/>
+                        <circle cx="9" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="9" cy="19" r="1" fill="currentColor"/>
+                        <circle cx="15" cy="5" r="1" fill="currentColor"/>
+                        <circle cx="15" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="15" cy="19" r="1" fill="currentColor"/>
+                    </svg>
+                </div>
                 ${iconHtml}
                 <div class="engine-info">
                     <strong>${engine.name}</strong>
@@ -642,8 +654,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.classList.add('editing');
             }
 
+            // Add drag and drop event listeners to the handle
+            const handle = div.querySelector('.drag-handle');
+            handle.addEventListener('dragstart', (e) => {
+                // Pass the index from the parent div
+                handleEngineListDragStart.call(div, e);
+            });
+
+            div.addEventListener('dragover', handleEngineListDragOver);
+            div.addEventListener('drop', handleEngineListDrop);
+            div.addEventListener('dragend', handleEngineListDragEnd);
+
             const editBtn = div.querySelector('.edit-engine');
-            editBtn.onclick = () => {
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
                 editEngineIndex = index;
                 engineNameInput.value = engine.name;
                 engineUrlInput.value = engine.url;
@@ -658,7 +682,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const delBtn = div.querySelector('.delete-engine');
             if (delBtn) {
-                delBtn.onclick = () => {
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
                     if (confirm(`「${engine.name}」を削除しますか？`)) {
                         searchEngines.splice(index, 1);
                         if (selectedEngineIndex >= index && selectedEngineIndex > 0) {
@@ -949,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Drag and Drop
+    // Drag and Drop (Links)
     let draggedItem = null;
     function handleDragStart(e) {
         draggedItem = this;
@@ -971,6 +996,50 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
     function handleDragEnd() { this.classList.remove('dragging'); }
+
+    // Drag and Drop (Search Engines)
+    let draggedEngine = null;
+    function handleEngineListDragStart(e) {
+        draggedEngine = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.engineIndex);
+    }
+    function handleEngineListDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+    function handleEngineListDrop(e) {
+        e.stopPropagation();
+        const sIdx = parseInt(e.dataTransfer.getData('text/plain'));
+        const tIdx = parseInt(this.dataset.engineIndex);
+        if (sIdx !== tIdx) {
+            const moved = searchEngines.splice(sIdx, 1)[0];
+            searchEngines.splice(tIdx, 0, moved);
+
+            // Update selectedEngineIndex if needed
+            if (selectedEngineIndex === sIdx) {
+                selectedEngineIndex = tIdx;
+            } else if (sIdx < selectedEngineIndex && tIdx >= selectedEngineIndex) {
+                selectedEngineIndex--;
+            } else if (sIdx > selectedEngineIndex && tIdx <= selectedEngineIndex) {
+                selectedEngineIndex++;
+            }
+
+            // Update editEngineIndex if needed
+            if (editEngineIndex === sIdx) {
+                editEngineIndex = tIdx;
+            } else if (sIdx < editEngineIndex && tIdx >= editEngineIndex) {
+                editEngineIndex--;
+            } else if (sIdx > editEngineIndex && tIdx <= editEngineIndex) {
+                editEngineIndex++;
+            }
+
+            saveEnginesToStorage();
+            renderEngineAdminList();
+            renderEngineDropdown();
+            updateSelectedEngineUI();
+        }
+        return false;
+    }
+    function handleEngineListDragEnd() { this.classList.remove('dragging'); }
 
     window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
 
