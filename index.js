@@ -531,12 +531,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Sidebar Logic
-    sidebarOpenBtn.onclick = () => {
+    function openSidebar() {
         switchSidebarTab('general'); // Default tab when opening
         sidebar.classList.add('open');
-    };
+        document.body.classList.add('sidebar-open');
+    }
 
-    sidebarCloseBtn.onclick = () => sidebar.classList.remove('open');
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+    }
+
+    sidebarOpenBtn.onclick = openSidebar;
+    sidebarCloseBtn.onclick = closeSidebar;
 
     function switchSidebarTab(tabName) {
         sidebarTabs.forEach(tab => {
@@ -610,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addDiv.onclick = (e) => {
             e.stopPropagation();
             switchSidebarTab('engines');
-            sidebar.classList.add('open');
+            openSidebar();
             engineDropdown.style.display = 'none';
         };
         engineDropdown.appendChild(addDiv);
@@ -766,11 +773,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', (e) => {
         engineDropdown.style.display = 'none';
+
+        if (sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) &&
+            !sidebarOpenBtn.contains(e.target)) {
+            closeSidebar();
+        }
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            sidebar.classList.remove('open');
+            closeSidebar();
         }
     });
 
