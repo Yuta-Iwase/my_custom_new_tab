@@ -766,6 +766,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', (e) => {
         engineDropdown.style.display = 'none';
+
+        if (sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) &&
+            !sidebarOpenBtn.contains(e.target)) {
+            sidebar.classList.remove('open');
+        }
     });
 
     document.addEventListener('keydown', (e) => {
