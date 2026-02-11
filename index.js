@@ -574,18 +574,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalItems = searchEngines.length + 1; // +1 for the Add button
         let columns = 3; // Default
 
-        if (totalItems <= 8) {
+        if (totalItems <= 5) {
             columns = totalItems;
-        } else if (totalItems <= 16) {
-            columns = 8;
         } else {
-            columns = Math.ceil(totalItems / 2);
+            columns = 5;
         }
 
-        engineDropdown.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-        // Force a wider min-width based on columns to ensure items don't squash too much
-        engineDropdown.style.width = 'max-content';
-        engineDropdown.style.maxWidth = '90vw';
+        engineDropdown.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
 
         searchEngines.forEach((engine, index) => {
             const div = document.createElement('div');

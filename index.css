@@ -257,6 +257,7 @@ h1 {
     position: absolute;
     top: 60px;
     left: 0;
+    right: 0;
     background: var(--menu-bg);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
@@ -266,6 +267,7 @@ h1 {
     padding: 15px;
     /* grid-template-columns set via JS */
     gap: 10px;
+    box-sizing: border-box;
 }
 
 .engine-item {
