@@ -714,8 +714,8 @@ document.addEventListener('DOMContentLoaded', () => {
         editEngineIndex = -1;
         engineNameInput.value = '';
         engineUrlInput.value = '';
-        const faviconRadio = document.querySelector('input[name="engine-icon-type"][value="favicon"]');
-        if (faviconRadio) faviconRadio.checked = true;
+        const initialRadio = document.querySelector('input[name="engine-icon-type"][value="initial"]');
+        if (initialRadio) initialRadio.checked = true;
         engineCustomIconData = null;
         updateEngineIconOptionsUI();
         addEngineBtn.textContent = '検索エンジンを追加';
